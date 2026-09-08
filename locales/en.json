@@ -1,6 +1,7 @@
 {
   "appName": "Expire",
   "onboarding": {
+    "version": "v0.1.0",
     "eyebrow": "Expire",
     "title": "How will you use Expire?",
     "subtitle": "Family and business stay apart. You only see the spaces and tools for your account.",

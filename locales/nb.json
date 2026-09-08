@@ -1,6 +1,7 @@
 {
   "appName": "Expire",
   "onboarding": {
+    "version": "v0.1.0",
     "eyebrow": "Expire",
     "title": "Hvordan skal du bruke Expire?",
     "subtitle": "Familie og bedrift holdes fra hverandre. Du ser bare rom og verktøy for din konto.",

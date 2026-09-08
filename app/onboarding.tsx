@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
 import { useAccount } from '@/context/AccountContext';
@@ -63,6 +63,7 @@ export default function OnboardingScreen() {
           {t('onboarding.continue')}
         </Text>
       </Pressable>
+      <Text style={styles.version}>{t('onboarding.version')}</Text>
     </Screen>
   );
 }
@@ -161,5 +162,11 @@ const styles = StyleSheet.create({
   continueText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  version: {
+    marginTop: 4,
+    fontSize: 13,
+    color: colors.muted,
+    textAlign: 'center',
   },
 });
