@@ -31,6 +31,9 @@ export type Item = {
   imageUri: string | null;
   expiresOn: string | null;
   quantity: number;
+  notes: string | null;
+  discounted: boolean;
+  discountedOn: string | null;
   createdAt: string;
 };
 

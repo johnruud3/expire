@@ -11,6 +11,8 @@ import {
   loadAppState,
   resetLocalData,
   setSetting,
+  updateItemDiscounted,
+  updateItemNotes,
   updateItemSpace,
   upsertProduct,
 } from '@/lib/db';
@@ -34,10 +36,13 @@ type AccountContextValue = {
     imageUri: string | null;
     expiresOn: string | null;
     quantity: number;
+    notes: string | null;
     product?: ProductRecord | null;
   }) => Promise<void>;
   lookupSavedProduct: (barcode: string) => Promise<ProductRecord | null>;
   moveItem: (itemId: string, spaceId: string) => Promise<void>;
+  saveItemNotes: (itemId: string, notes: string | null) => Promise<void>;
+  setItemDiscounted: (itemId: string, discounted: boolean) => Promise<void>;
   startOver: () => Promise<void>;
 };
 
@@ -141,6 +146,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       imageUri: string | null;
       expiresOn: string | null;
       quantity: number;
+      notes: string | null;
       product?: ProductRecord | null;
     }) => {
       if (!accountMode) return;
@@ -159,6 +165,24 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     async (itemId: string, spaceId: string) => {
       if (!accountMode) return;
       await updateItemSpace(itemId, spaceId);
+      await refresh(accountMode);
+    },
+    [accountMode, refresh]
+  );
+
+  const saveItemNotes = useCallback(
+    async (itemId: string, notes: string | null) => {
+      if (!accountMode) return;
+      await updateItemNotes(itemId, notes);
+      await refresh(accountMode);
+    },
+    [accountMode, refresh]
+  );
+
+  const setItemDiscounted = useCallback(
+    async (itemId: string, discounted: boolean) => {
+      if (!accountMode) return;
+      await updateItemDiscounted(itemId, discounted);
       await refresh(accountMode);
     },
     [accountMode, refresh]
@@ -185,9 +209,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       addItem,
       lookupSavedProduct,
       moveItem,
+      saveItemNotes,
+      setItemDiscounted,
       startOver,
     }),
-    [ready, accountMode, language, spaces, items, chooseAccount, changeLanguage, addSpace, deleteSpace, addItem, lookupSavedProduct, moveItem, startOver]
+    [ready, accountMode, language, spaces, items, chooseAccount, changeLanguage, addSpace, deleteSpace, addItem, lookupSavedProduct, moveItem, saveItemNotes, setItemDiscounted, startOver]
   );
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;

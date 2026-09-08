@@ -18,6 +18,8 @@ export const colors = {
   later: '#2F6B4F',
   expired: '#7F1D1D',
   white: '#FFFFFF',
+  add: '#1E5A8A',
+  saleSoft: '#E8F6EC',
 };
 
 export function accentFor(mode: AccountMode) {

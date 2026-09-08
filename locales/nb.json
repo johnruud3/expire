@@ -14,6 +14,7 @@
     "overview": "Oversikt",
     "spaces": "Rom",
     "add": "Legg til",
+    "discounted": "Tilbud",
     "settings": "Innstillinger"
   },
   "overview": {
@@ -107,6 +108,10 @@
     "missingDateTitle": "Dato mangler",
     "missingDateBody": "Skriv inn nøyaktig dag, måned og år fra pakken.",
     "quantity": "Antall",
+    "notes": "Notat",
+    "notesPlaceholderFamily": "Åpnet i går, halvfull…",
+    "notesPlaceholderBusiness": "Skadet eske, bruk først…",
+    "notesHint": "Valgfritt. Gjelder bare denne varen.",
     "space": "Rom",
     "save": "Lagre vare",
     "saving": "Lagrer…",
@@ -134,12 +139,27 @@
     "startOverHint": "Dette sletter lokale rom og varer. Sky-invitasjoner kommer senere.",
     "comingSoon": "Invitasjoner og skysynk kommer senere."
   },
+  "photo": {
+    "open": "Se bilde",
+    "close": "Lukk bilde"
+  },
   "item": {
     "back": "Oversikt",
     "missing": "Denne varen finnes ikke",
     "barcode": "Strekkode",
     "currentRoom": "Rom",
-    "move": "Flytt til et annet rom"
+    "move": "Flytt til et annet rom",
+    "saveNotes": "Lagre notat",
+    "discountedOff": "Merk som satt ned",
+    "discountedOn": "På tilbudshyllen"
+  },
+  "discounted": {
+    "title": "Tilbud",
+    "hint": "Varer merket som satt ned. Denne fanen er fast i appen.",
+    "empty": "Ingenting på tilbudshyllen ennå. Åpne en vare og trykk på %-knappen.",
+    "cta": "Gå til oversikt",
+    "today": "I dag",
+    "yesterday": "I går"
   },
   "notFound": {
     "title": "Denne skjermen finnes ikke",

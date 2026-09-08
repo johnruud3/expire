@@ -47,6 +47,13 @@ export function toDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+export function formatSaleDay(value: string, locale: string, labels: { today: string; yesterday: string }) {
+  const today = toDateKey(new Date());
+  if (value === today) return labels.today;
+  if (value === dateKeyFromToday(-1)) return labels.yesterday;
+  return formatDateKey(value, locale);
+}
+
 export function formatDateKey(value: string, locale: string) {
   return parseDateKey(value).toLocaleDateString(locale === 'nb' ? 'nb-NO' : 'en-GB', {
     day: 'numeric',

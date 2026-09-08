@@ -1,27 +1,22 @@
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
+import { ItemRow } from '@/components/items/ItemRow';
+import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { Screen } from '@/components/ui/Screen';
 import { useAccount } from '@/context/AccountContext';
-import { formatDateBlock, formatDateKey, itemUrgency, type Urgency } from '@/lib/dates';
+import { itemUrgency } from '@/lib/dates';
 import { accentFor, accentSoftFor, colors } from '@/lib/theme';
-import type { Item, Space } from '@/lib/types';
-
-const urgencyColor: Record<Urgency, string> = {
-  today: colors.today,
-  week: colors.week,
-  expired: colors.expired,
-  later: colors.later,
-};
 
 export default function OverviewScreen() {
   const { t } = useTranslation();
-  const { accountMode, language, items, spaces } = useAccount();
+  const { accountMode, language, items, spaces, setItemDiscounted } = useAccount();
   const mode = accountMode ?? 'family';
   const accent = accentFor(mode);
   const [roomFilter, setRoomFilter] = useState<string>('all');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const activeFilter =
     roomFilter === 'all' || spaces.some((space) => space.id === roomFilter) ? roomFilter : 'all';
 
@@ -95,9 +90,13 @@ export default function OverviewScreen() {
             language={language}
             room={spaces.find((space) => space.id === item.spaceId)}
             onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } })}
+            onPressPhoto={item.imageUri ? () => setPhotoUri(item.imageUri) : undefined}
+            onToggleDiscount={() => void setItemDiscounted(item.id, !item.discounted)}
           />
         ))
       )}
+
+      <PhotoViewer uri={photoUri} onClose={() => setPhotoUri(null)} />
     </Screen>
   );
 }
@@ -153,48 +152,6 @@ function FilterChip({
         },
       ]}>
       <Text style={[styles.filterText, { color: active ? accent : colors.ink }]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function ItemRow({
-  item,
-  language,
-  room,
-  onPress,
-}: {
-  item: Item;
-  language: string;
-  room?: Space;
-  onPress: () => void;
-}) {
-  const urgency = itemUrgency(item.expiresOn);
-  const block = item.expiresOn ? formatDateBlock(item.expiresOn, language) : null;
-  const onYellow = urgency === 'week';
-
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.itemRow, { opacity: pressed ? 0.85 : 1 }]}>
-      <View style={[styles.dateBlock, { backgroundColor: urgencyColor[urgency] }]}>
-        <Text style={[styles.dateDay, { color: onYellow ? colors.ink : colors.white }]}>
-          {block?.day ?? '—'}
-        </Text>
-        <Text style={[styles.dateMonth, { color: onYellow ? colors.ink : colors.white }]}>
-          {block?.month ?? ''}
-        </Text>
-      </View>
-      {item.imageUri ? (
-        <Image source={{ uri: item.imageUri }} style={styles.thumb} />
-      ) : (
-        <View style={[styles.thumb, { backgroundColor: colors.cream }]} />
-      )}
-      <View style={styles.itemCopy}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemMeta}>
-          {room?.name ?? '—'}
-          {item.expiresOn ? ` · ${formatDateKey(item.expiresOn, language)}` : ''}
-          {` · ×${item.quantity}`}
-        </Text>
-      </View>
     </Pressable>
   );
 }
@@ -256,50 +213,5 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '700',
     fontSize: 16,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.paper,
-    borderRadius: 18,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  dateBlock: {
-    width: 52,
-    height: 56,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateDay: {
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 22,
-  },
-  dateMonth: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  thumb: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-  },
-  itemCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  itemName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.ink,
-  },
-  itemMeta: {
-    fontSize: 13,
-    color: colors.muted,
   },
 });

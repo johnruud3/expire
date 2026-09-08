@@ -9,15 +9,18 @@ import {
   type Space,
   type SpaceType,
 } from '@/lib/types';
+import { toDateKey } from '@/lib/dates';
 
 type SettingKey = 'accountMode' | 'language';
 
 let sqlite: SQLite.SQLiteDatabase | null = null;
+let opening: Promise<SQLite.SQLiteDatabase> | null = null;
 
 async function getSqlite() {
   if (sqlite) return sqlite;
-  sqlite = await SQLite.openDatabaseAsync('expire.db');
-  await sqlite.execAsync(`
+  opening ??= (async () => {
+    const db = await SQLite.openDatabaseAsync('expire.db');
+    await db.execAsync(`
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY NOT NULL,
@@ -40,6 +43,9 @@ async function getSqlite() {
       image_uri TEXT,
       expires_on TEXT,
       quantity INTEGER NOT NULL DEFAULT 1,
+      notes TEXT,
+      discounted INTEGER NOT NULL DEFAULT 0,
+      discounted_on TEXT,
       created_at TEXT NOT NULL,
       household_id TEXT,
       organization_id TEXT,
@@ -53,7 +59,34 @@ async function getSqlite() {
       updated_at TEXT NOT NULL
     );
   `);
-  return sqlite;
+    await migrateItems(db);
+    sqlite = db;
+    return db;
+  })();
+  try {
+    return await opening;
+  } catch (error) {
+    opening = null;
+    throw error;
+  }
+}
+
+async function migrateItems(db: SQLite.SQLiteDatabase) {
+  await addItemColumn(db, 'notes', 'ALTER TABLE items ADD COLUMN notes TEXT');
+  await addItemColumn(db, 'discounted', 'ALTER TABLE items ADD COLUMN discounted INTEGER NOT NULL DEFAULT 0');
+  await addItemColumn(db, 'discounted_on', 'ALTER TABLE items ADD COLUMN discounted_on TEXT');
+}
+
+async function addItemColumn(db: SQLite.SQLiteDatabase, name: string, sql: string) {
+  const columns = await db.getAllAsync<Record<string, unknown>>('PRAGMA table_info(items)');
+  const exists = columns.some((column) => String(column.name ?? column.NAME ?? '') === name);
+  if (exists) return;
+  try {
+    await db.execAsync(sql);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/duplicate column/i.test(message)) throw error;
+  }
 }
 
 export async function getSetting(key: SettingKey): Promise<string | null> {
@@ -104,9 +137,12 @@ export async function listItems(spaceIds: string[]): Promise<Item[]> {
     image_uri: string | null;
     expires_on: string | null;
     quantity: number;
+    notes: string | null;
+    discounted: number | null;
+    discounted_on: string | null;
     created_at: string;
   }>(
-    `SELECT id, space_id, name, barcode, image_uri, expires_on, quantity, created_at FROM items WHERE space_id IN (${placeholders})`,
+    `SELECT id, space_id, name, barcode, image_uri, expires_on, quantity, notes, discounted, discounted_on, created_at FROM items WHERE space_id IN (${placeholders})`,
     ...spaceIds
   );
   return rows.map((row) => ({
@@ -117,6 +153,9 @@ export async function listItems(spaceIds: string[]): Promise<Item[]> {
     imageUri: row.image_uri,
     expiresOn: row.expires_on,
     quantity: row.quantity,
+    notes: row.notes,
+    discounted: Boolean(row.discounted),
+    discountedOn: row.discounted_on,
     createdAt: row.created_at,
   }));
 }
@@ -163,6 +202,7 @@ export async function insertItem(input: {
   imageUri: string | null;
   expiresOn: string | null;
   quantity: number;
+  notes: string | null;
 }): Promise<Item> {
   const item: Item = {
     id: createId(),
@@ -172,11 +212,14 @@ export async function insertItem(input: {
     imageUri: input.imageUri,
     expiresOn: input.expiresOn,
     quantity: input.quantity,
+    notes: input.notes,
+    discounted: false,
+    discountedOn: null,
     createdAt: new Date().toISOString(),
   };
   const db = await getSqlite();
   await db.runAsync(
-    'INSERT INTO items (id, space_id, name, barcode, image_uri, expires_on, quantity, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO items (id, space_id, name, barcode, image_uri, expires_on, quantity, notes, discounted, discounted_on, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     item.id,
     item.spaceId,
     item.name,
@@ -184,6 +227,9 @@ export async function insertItem(input: {
     item.imageUri,
     item.expiresOn,
     item.quantity,
+    item.notes,
+    0,
+    null,
     item.createdAt
   );
   return item;
@@ -192,6 +238,21 @@ export async function insertItem(input: {
 export async function updateItemSpace(itemId: string, spaceId: string): Promise<void> {
   const db = await getSqlite();
   await db.runAsync('UPDATE items SET space_id = ? WHERE id = ?', spaceId, itemId);
+}
+
+export async function updateItemNotes(itemId: string, notes: string | null): Promise<void> {
+  const db = await getSqlite();
+  await db.runAsync('UPDATE items SET notes = ? WHERE id = ?', notes, itemId);
+}
+
+export async function updateItemDiscounted(itemId: string, discounted: boolean): Promise<void> {
+  const db = await getSqlite();
+  await db.runAsync(
+    'UPDATE items SET discounted = ?, discounted_on = ? WHERE id = ?',
+    discounted ? 1 : 0,
+    discounted ? toDateKey(new Date()) : null,
+    itemId
+  );
 }
 
 export async function deleteSpace(spaceId: string): Promise<void> {

@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect, useNavigation } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { BarcodeScannerScreen } from '@/components/add/BarcodeScannerModal';
 import { PackageDateInput } from '@/components/add/PackageDateInput';
+import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { Screen } from '@/components/ui/Screen';
 import { useAccount } from '@/context/AccountContext';
 import { isValidDateKey } from '@/lib/dates';
@@ -36,6 +37,9 @@ export default function AddScreen() {
   const [savedImage, setSavedImage] = useState<string | null>(null);
   const [ownImage, setOwnImage] = useState<string | null>(null);
   const [imageChoice, setImageChoice] = useState<ImageChoice>(null);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [notes, setNotes] = useState('');
+  const scrollRef = useRef<ScrollView>(null);
 
   const selectedImage =
     imageChoice === 'off' ? offImage : imageChoice === 'saved' ? savedImage : imageChoice === 'own' ? ownImage : null;
@@ -76,6 +80,7 @@ export default function AddScreen() {
     setOffName(null);
     setSavedImage(null);
     setImageChoice(null);
+    setNotes('');
   }
 
   async function applyBarcode(raw: string) {
@@ -141,6 +146,7 @@ export default function AddScreen() {
         imageUri: selectedImage,
         expiresOn,
         quantity,
+        notes: notes.trim() || null,
         product: cleanBarcode
           ? {
               barcode: cleanBarcode,
@@ -185,7 +191,7 @@ export default function AddScreen() {
   }
 
   return (
-    <Screen>
+    <Screen ref={scrollRef}>
       <Text style={styles.title}>{t('add.title')}</Text>
       {barcode ? <Text style={styles.barcode}>{barcode}</Text> : null}
 
@@ -197,7 +203,16 @@ export default function AddScreen() {
       ) : (
         <View style={styles.card}>
           {selectedImage ? (
-            <Image source={{ uri: selectedImage }} style={styles.preview} />
+            <Pressable
+              onPress={() => setPhotoOpen(true)}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={t('photo.open')}
+              style={styles.previewWrap}>
+              <Image source={{ uri: selectedImage }} style={styles.preview} />
+              <View style={styles.photoHint}>
+                <Ionicons name="expand-outline" size={16} color={colors.white} />
+              </View>
+            </Pressable>
           ) : (
             <View style={[styles.preview, styles.previewEmpty, { backgroundColor: accentSoftFor(mode) }]}>
               <Ionicons name="image-outline" size={28} color={accent} />
@@ -263,6 +278,21 @@ export default function AddScreen() {
             </Pressable>
           </View>
         </View>
+
+        <Text style={styles.label}>{t('add.notes')}</Text>
+        <TextInput
+          value={notes}
+          onChangeText={setNotes}
+          placeholder={mode === 'family' ? t('add.notesPlaceholderFamily') : t('add.notesPlaceholderBusiness')}
+          placeholderTextColor={colors.muted}
+          style={[styles.input, styles.notesInput]}
+          multiline
+          textAlignVertical="top"
+          onFocus={() => {
+            setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 280);
+          }}
+        />
+        <Text style={styles.hint}>{t('add.notesHint')}</Text>
       </View>
 
       <Pressable
@@ -272,6 +302,7 @@ export default function AddScreen() {
         <Text style={styles.primaryText}>{saving ? t('add.saving') : t('add.save')}</Text>
       </Pressable>
 
+      <PhotoViewer uri={photoOpen ? selectedImage : null} onClose={() => setPhotoOpen(false)} />
     </Screen>
   );
 }
@@ -316,6 +347,9 @@ const styles = StyleSheet.create({
     color: colors.ink,
     backgroundColor: colors.cream,
   },
+  notesInput: {
+    minHeight: 88,
+  },
   primary: {
     borderRadius: 16,
     paddingVertical: 16,
@@ -334,14 +368,29 @@ const styles = StyleSheet.create({
   photoActionText: {
     fontWeight: '700',
   },
+  previewWrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
   preview: {
     width: '100%',
     height: 160,
-    borderRadius: 14,
+  },
+  photoHint: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   previewEmpty: {
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 14,
   },
   row: {
     flexDirection: 'row',

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAccount } from '@/context/AccountContext';
@@ -24,6 +25,7 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colors.paper,
           borderTopColor: colors.line,
+          overflow: 'visible',
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -40,11 +42,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="spaces"
+        name="discounted"
         options={{
-          title: t('tabs.spaces'),
+          title: t('tabs.discounted'),
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cube-outline" size={size} color={color} />
+            <Ionicons name="pricetag-outline" size={size} color={color} />
           ),
         }}
       />
@@ -52,8 +54,22 @@ export default function TabLayout() {
         name="add"
         options={{
           title: t('tabs.add'),
+          tabBarShowLabel: false,
+          tabBarButton: (props) => (
+            <AddTabButton
+              onPress={props.onPress as never}
+              accessibilityState={props.accessibilityState}
+              label={t('tabs.add')}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="spaces"
+        options={{
+          title: t('tabs.spaces'),
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="scan-outline" size={size} color={color} />
+            <Ionicons name="cube-outline" size={size} color={color} />
           ),
         }}
       />
@@ -69,3 +85,58 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+function AddTabButton({
+  onPress,
+  accessibilityState,
+  label,
+}: {
+  onPress?: (...args: never[]) => void;
+  accessibilityState?: { selected?: boolean };
+  label: string;
+}) {
+  const selected = Boolean(accessibilityState?.selected);
+
+  return (
+    <Pressable
+      onPress={onPress as never}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.addWrap, { opacity: pressed ? 0.88 : 1 }]}>
+      <View style={[styles.addFab, selected ? styles.addFabSelected : null]}>
+        <Ionicons name="scan-outline" size={26} color={colors.white} />
+      </View>
+      <Text style={styles.addLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  addWrap: {
+    flex: 1,
+    alignItems: 'center',
+    top: -14,
+  },
+  addFab: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: colors.add,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.add,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
+  addFabSelected: {
+    transform: [{ scale: 1.04 }],
+  },
+  addLabel: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.add,
+  },
+});

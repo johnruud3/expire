@@ -14,6 +14,7 @@
     "overview": "Overview",
     "spaces": "Rooms",
     "add": "Add",
+    "discounted": "On sale",
     "settings": "Settings"
   },
   "overview": {
@@ -107,6 +108,10 @@
     "missingDateTitle": "Date needed",
     "missingDateBody": "Enter the exact day, month and year from the package.",
     "quantity": "Quantity",
+    "notes": "Notes",
+    "notesPlaceholderFamily": "Opened yesterday, half left…",
+    "notesPlaceholderBusiness": "Damaged pack, use first…",
+    "notesHint": "Optional. Stays on this item only.",
     "space": "Room",
     "save": "Save item",
     "saving": "Saving…",
@@ -134,12 +139,27 @@
     "startOverHint": "This clears local spaces and items. Cloud invites come later.",
     "comingSoon": "Invites and cloud sync come later."
   },
+  "photo": {
+    "open": "View photo",
+    "close": "Close photo"
+  },
   "item": {
     "back": "Overview",
     "missing": "This item is gone",
     "barcode": "Barcode",
     "currentRoom": "Room",
-    "move": "Move to another room"
+    "move": "Move to another room",
+    "saveNotes": "Save note",
+    "discountedOff": "Mark as on sale",
+    "discountedOn": "On the discount shelf"
+  },
+  "discounted": {
+    "title": "On sale",
+    "hint": "Items marked as on sale. This tab is built into the app.",
+    "empty": "Nothing is on the discount shelf yet. Open an item and tap the % button.",
+    "cta": "Go to overview",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "notFound": {
     "title": "This screen does not exist",

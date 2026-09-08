@@ -1,3 +1,4 @@
+import { toDateKey } from '@/lib/dates';
 import {
   createId,
   type AccountMode,
@@ -64,7 +65,14 @@ export async function listSpaces(mode: AccountMode): Promise<Space[]> {
 export async function listItems(spaceIds: string[]): Promise<Item[]> {
   if (spaceIds.length === 0) return [];
   const idSet = new Set(spaceIds);
-  return loadWeb().items.filter((item) => idSet.has(item.spaceId));
+  return loadWeb()
+    .items.filter((item) => idSet.has(item.spaceId))
+    .map((item) => ({
+      ...item,
+      notes: item.notes ?? null,
+      discounted: Boolean(item.discounted),
+      discountedOn: item.discountedOn ?? null,
+    }));
 }
 
 export async function getProduct(barcode: string): Promise<ProductRecord | null> {
@@ -86,6 +94,7 @@ export async function insertItem(input: {
   imageUri: string | null;
   expiresOn: string | null;
   quantity: number;
+  notes: string | null;
 }): Promise<Item> {
   const item: Item = {
     id: createId(),
@@ -95,6 +104,9 @@ export async function insertItem(input: {
     imageUri: input.imageUri,
     expiresOn: input.expiresOn,
     quantity: input.quantity,
+    notes: input.notes,
+    discounted: false,
+    discountedOn: null,
     createdAt: new Date().toISOString(),
   };
   loadWeb().items.push(item);
@@ -105,6 +117,21 @@ export async function insertItem(input: {
 export async function updateItemSpace(itemId: string, spaceId: string): Promise<void> {
   const item = loadWeb().items.find((entry) => entry.id === itemId);
   if (item) item.spaceId = spaceId;
+  saveWeb();
+}
+
+export async function updateItemNotes(itemId: string, notes: string | null): Promise<void> {
+  const item = loadWeb().items.find((entry) => entry.id === itemId);
+  if (item) item.notes = notes;
+  saveWeb();
+}
+
+export async function updateItemDiscounted(itemId: string, discounted: boolean): Promise<void> {
+  const item = loadWeb().items.find((entry) => entry.id === itemId);
+  if (item) {
+    item.discounted = discounted;
+    item.discountedOn = discounted ? toDateKey(new Date()) : null;
+  }
   saveWeb();
 }
 
